@@ -16,7 +16,7 @@ img{max-width:100%}
 :root{
   --bg:#ECF1EC; --panel:#FFFFFF; --panel-2:#F5F8F5; --ink:#15231C; --muted:#56665D; --line:#D2DCD4;
   --accent:#B87A08; --accent-soft:#F6E7C6; --chip:#E2AE38; --chip-edge:#9A6A0A;
-  --up:#1D8A52; --up-soft:#D7EFE1; --down:#C03C2B; --down-soft:#F7DDD8; --blue:#2C6A91; --dim:#9DAEA4;
+  --up:#1D8A52; --up-soft:#D7EFE1; --down:#C03C2B; --down-soft:#F7DDD8; --blue:#2C6A91; --dim:#9DAEA4; --goal:#7B4BB5;
   --f-display:"Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
   --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -25,11 +25,11 @@ img{max-width:100%}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0E1512; --panel:#17201B; --panel-2:#1C2721; --ink:#E5EEE8; --muted:#9BACA2; --line:#2C3A32;
   --accent:#E6A93D; --accent-soft:#3A2E14; --chip:#E2AE38; --chip-edge:#8E6209;
-  --up:#4FC488; --up-soft:#173726; --down:#F06A57; --down-soft:#3D1D18; --blue:#6EAAD4; --dim:#5D6E64; color-scheme:dark } }
+  --up:#4FC488; --up-soft:#173726; --down:#F06A57; --down-soft:#3D1D18; --blue:#6EAAD4; --dim:#5D6E64; --goal:#B998EA; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0E1512; --panel:#17201B; --panel-2:#1C2721; --ink:#E5EEE8; --muted:#9BACA2; --line:#2C3A32;
   --accent:#E6A93D; --accent-soft:#3A2E14; --chip:#E2AE38; --chip-edge:#8E6209;
-  --up:#4FC488; --up-soft:#173726; --down:#F06A57; --down-soft:#3D1D18; --blue:#6EAAD4; --dim:#5D6E64; color-scheme:dark }
+  --up:#4FC488; --up-soft:#173726; --down:#F06A57; --down-soft:#3D1D18; --blue:#6EAAD4; --dim:#5D6E64; --goal:#B998EA; color-scheme:dark }
 
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.55}
 .wrap{max-width:1200px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
@@ -119,7 +119,16 @@ svg.chart{display:block;width:100%;height:auto;overflow:visible}
 .chart .sp-down{fill:none;stroke:var(--down);stroke-width:1;opacity:.4}
 .chart .l-med{fill:none;stroke:var(--ink);stroke-width:3}
 .chart .lbl{font-family:var(--f-body);font-size:12px;font-weight:700}
-.chart .lbl.val{fill:var(--accent)} .chart .lbl.in{fill:var(--blue)} .chart .lbl.med{fill:var(--ink)}
+.chart .lbl.val{fill:var(--accent)} .chart .lbl.in{fill:var(--blue)} .chart .lbl.med{fill:var(--ink)} .chart .lbl.goal{fill:var(--goal)}
+.chart .l-goal{stroke:var(--goal);stroke-width:2;stroke-dasharray:3 4}
+.tag.g7{border-color:var(--goal);color:var(--goal)}
+.scen{list-style:none;padding:0;margin:12px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.scen li{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px;align-content:start}
+.scen .story{font-size:.93rem}
+.scen .facts{display:flex;flex-wrap:wrap;gap:6px}
+.scen .facts span{font-family:var(--f-mono);font-size:.74rem;background:var(--panel-2);border-radius:6px;padding:2px 7px}
+.scen ol{margin:0;padding-left:20px;font-size:.9rem;display:grid;gap:4px}
+.scen .btn{justify-self:start;padding:8px 14px;font-size:.92rem}
 .draw{animation:draw 1.8s ease-out forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 .pop{opacity:0;animation:pop .3s ease-out forwards}
@@ -215,6 +224,7 @@ footer{font-size:.84rem;color:var(--muted);max-width:75ch}
       <div class="setting"><label for="start">Money to start <output id="startOut"></output></label><input id="start" type="range" min="0" max="10000" step="100" value="1000"></div>
       <div class="setting"><label for="monthly">Add every month <output id="monthlyOut"></output></label><input id="monthly" type="range" min="0" max="500" step="5" value="25"></div>
       <div class="setting"><label for="years">How many years <output id="yearsOut"></output></label><input id="years" type="range" min="1" max="40" step="1" value="10"></div>
+      <div class="setting"><label for="goal">Savings goal (optional) <output id="goalOut"></output></label><input id="goal" type="range" min="0" max="10000" step="50" value="0"></div>
     </div>
     <div class="chipbar">
       <span class="left" id="chipsLeft"></span>
@@ -235,6 +245,7 @@ footer{font-size:.84rem;color:var(--muted);max-width:75ch}
     <div class="legend">
       <span><i class="sw" style="background:var(--accent)"></i>Your money</span>
       <span><i class="sw" style="background:var(--blue)"></i>Money you put in</span>
+      <span id="legGoal" hidden><i class="sw" style="background:var(--goal)"></i>Your goal</span>
       <span><i class="sw" style="background:var(--down);width:10px;height:10px;border-radius:50%"></i>Bad news</span>
       <span><i class="sw" style="background:var(--up);width:10px;height:10px;border-radius:50%"></i>Good news</span>
     </div>
@@ -258,7 +269,7 @@ footer{font-size:.84rem;color:var(--muted);max-width:75ch}
   <div id="compareWrap" hidden>
     <h3 style="margin-top:22px">My comparison table</h3>
     <p class="muted" style="font-size:.88rem">Try different portfolios and add each one here to compare.</p>
-    <div class="table-wrap"><table><thead><tr><th>Portfolio</th><th>Years</th><th>Risk</th><th>Typical ending</th><th>Worst</th><th>Best</th><th>Lost money</th><th></th></tr></thead><tbody id="compareBody"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Portfolio</th><th>Years</th><th>Risk</th><th>Typical ending</th><th>Worst</th><th>Best</th><th>Lost money</th><th>Reached goal</th><th></th></tr></thead><tbody id="compareBody"></tbody></table></div>
   </div>
 </section>
 
@@ -280,6 +291,12 @@ footer{font-size:.84rem;color:var(--muted);max-width:75ch}
   </div>
 </section>
 
+<section class="panel" id="grade7">
+  <p class="eyebrow">Grade 7 · Money goals</p><h2>Scenarios: earning, saving &amp; choosing</h2>
+  <p class="muted" style="max-width:62ch;margin-top:4px">Each scenario sets up the simulator for you. Press <b>Load this scenario</b>, then answer the questions.</p>
+  <ul class="scen" id="scenList"></ul>
+</section>
+
 <section class="panel">
   <p class="eyebrow">Try these</p><h2>Missions</h2>
   <ul class="missions">
@@ -298,6 +315,7 @@ footer{font-size:.84rem;color:var(--muted);max-width:75ch}
     <div class="teacher-body">
       <div><b>Target outcomes</b>
         <ul>
+          <li><code>CEFL7 FL</code> Grade 7 scenarios: how income is earned, taxed and used (gross vs net, deductions, what taxes pay for) and how managing money affects financial security (budgets, short- and long-term goals, trade-offs). Use them as an on-ramp for students working below grade level before the investing missions.</li>
           <li><code>CEFL8 FL 8.5</code> saving vs investing, return, risk, principal, rate, compound interest (the core of this lab)</li>
           <li><code>CEFL9 FL 9.5</code> (understanding) compound interest amplifies growth and debt; time and rate are the key variables. Bridge to the Unit 4 credit card payoff: the same curve that grows savings grows a balance.</li>
           <li><code>MATH8 N11</code> / <code>MATH9 N12</code> percents · <code>MATH8 SP2</code> / <code>MATH9 SP1</code> interpret graphs · <code>MATH9 SP5</code> trends, extremes, clusters · <code>MATH8 SP7</code> same experiment, different outcomes · <code>MATH9 SP7</code> probability vocabulary (more/less likely, best/worst)</li>
@@ -349,6 +367,23 @@ const EVENTS=[
  {k:'coin',p:.1,s:.7,t:'MoonCoin goes viral',d:'A celebrity posts about it and the price shoots up.'}
 ];
 const PRESETS=[[500,0,5],[0,100,10],[2000,50,4],[1000,100,40]];
+const SCEN=[
+ {title:'The bike goal',tag:'Saving for a goal',story:'You got $100 for your birthday. You want a $600 bike. You save $20 a month from chores and keep it in a jar at home.',
+  set:{start:100,monthly:20,years:2,goal:600,chips:{}},
+  qs:['Do you reach $600 in 2 years? Look at the Goal box.','Move the “Add every month” slider. What is the smallest amount that reaches the goal?','Put all 10 chips on the savings account. Does interest help much in 2 years?']},
+ {title:'Paycheque to laptop',tag:'Gross vs net pay',story:'You work part-time and earn $250 a month. After deductions (income tax, CPP and EI) you take home about $220. Your budget lets you save $50 a month for a $1,500 laptop.',
+  set:{start:0,monthly:50,years:3,goal:1500,chips:{save:10}},
+  qs:['In what month do you reach $1,500?','You lose $30 a month to deductions. Where does that money go? (Hint: taxes help pay for schools and hospitals.)','What could you cut from your budget to reach the goal 6 months sooner? Try it with the slider.']},
+ {title:'The snack trade-off',tag:'Trade-offs',story:'You spend about $5 on snacks every school day. That adds up to about $100 a month. What if you put that money in a Canada index fund for 10 years instead?',
+  set:{start:0,monthly:100,years:10,goal:0,chips:{can:10}},
+  qs:['How much did you put in? What is the typical ending after 100 futures?','What if you kept half your snacks? Change the monthly amount to $50 and test again.','Every choice has a trade-off. What do you give up, and what do you get?']},
+ {title:'Start early',tag:'Long-term goals',story:'Ava starts saving $25 a month at age 12 and keeps going until she is 52 (40 years). Ben waits until he is 22 and saves $25 a month for 30 years.',
+  set:{start:0,monthly:25,years:40,goal:0,chips:{world:10}},
+  qs:['Play 100 futures for Ava and add her to the comparison table.','Change the years to 30 for Ben. Test and add him too.','Ben put in only $3,000 less than Ava. How much less did he typically end with? Why?']},
+ {title:'Concert tickets next summer',tag:'Short-term goals',story:'You have $200 saved and add $10 a month. Concert tickets cost $300 next summer. A friend says MoonCoin will double your money fast.',
+  set:{start:200,monthly:10,years:1,goal:300,chips:{coin:10}},
+  qs:['Play 100 futures. In how many did you reach $300?','Count the red squares. How often did you lose money you needed?','Move all chips to the savings account and test again. Where should money for a short-term goal go? Why?']}
+];
 
 const $=s=>document.querySelector(s);
 const alloc={}; ASSETS.forEach(a=>alloc[a.id]=0);
@@ -363,7 +398,7 @@ const signMoney=v=>(v>=0?'+':'−')+'$'+Math.round(Math.abs(v)).toLocaleString('
 const pct=v=>(v>=0?'+':'−')+Math.abs(v*100).toFixed(0)+'%';
 const short=v=>{const a=Math.abs(v);return a>=1e6?'$'+(v/1e6).toFixed(a>=1e7?0:1)+'M':a>=1e3?'$'+(v/1e3).toFixed(a>=1e4?0:1)+'k':'$'+Math.round(v)};
 const bounce=s=>s===0?'None':s<=.06?'Small':s<=.16?'Medium':s<=.3?'Big':s<=.45?'Huge':'Wild';
-const settings=()=>({start:+$('#start').value,monthly:+$('#monthly').value,years:+$('#years').value});
+const settings=()=>({start:+$('#start').value,monthly:+$('#monthly').value,years:+$('#years').value,goal:+$('#goal').value});
 
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function randn(r){const u=r()||1e-9,v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
@@ -424,6 +459,7 @@ function renderBuilder(){
     d.querySelector('.minus').disabled=n===0;d.querySelector('.plus').disabled=placed()>=10});
   const s=settings();
   $('#startOut').textContent=money(s.start);$('#monthlyOut').textContent=money(s.monthly);$('#yearsOut').textContent=s.years+(s.years===1?' year':' years');
+  $('#goalOut').textContent=s.goal?money(s.goal):'Off';
 }
 function summary(){const parts=ASSETS.filter(a=>alloc[a.id]).map(a=>alloc[a.id]+' '+a.name.replace('High-interest savings account','Savings'));const left=10-placed();if(left)parts.push(left+' Cash');return parts.join(' · ')}
 
@@ -443,13 +479,15 @@ function frame(svg,maxY,years){
   return{W,H,L,R,T,B,x,y,top};
 }
 const pathOf=(arr,f,stride=1)=>{let d='';for(let i=0;i<arr.length;i+=stride)d+=(i?'L':'M')+f.x(i).toFixed(1)+','+f.y(Math.min(arr[i],f.top*1.02)).toFixed(1);if((arr.length-1)%stride)d+='L'+f.x(arr.length-1).toFixed(1)+','+f.y(Math.min(arr[arr.length-1],f.top*1.02)).toFixed(1);return d};
+function goalLine(svg,f,g){if(!g)return;const y=f.y(Math.min(g,f.top));el('line',{x1:f.L,x2:f.W-f.R,y1:y,y2:y,class:'l-goal'},svg);const t=el('text',{x:f.L+6,y:y-6,class:'lbl goal'},svg);t.textContent='Goal '+short(g)}
 function endLabel(svg,f,txt,v,cls,dy){if(f.R<40)return;const t=el('text',{x:f.W-f.R+8,y:f.y(Math.min(v,f.top))+4+(dy||0),class:'lbl '+cls},svg);t.textContent=txt}
 
 let lastOne=null;
 function drawOne(animate){
   const s=settings(),sim=lastOne,svg=$('#oneChart');
-  const maxY=Math.max(...sim.vals,...sim.contrib,10)*1.06;
+  const maxY=Math.max(...sim.vals,...sim.contrib,s.goal,10)*1.06;
   const f=frame(svg,maxY,s.years);
+  goalLine(svg,f,s.goal);
   const area=el('path',{d:pathOf(sim.vals,f)+`L${f.x(sim.N)},${f.y(0)}L${f.x(0)},${f.y(0)}Z`,class:'area'},svg);
   el('path',{d:pathOf(sim.contrib,f),class:'l-in'},svg);
   const p=el('path',{d:pathOf(sim.vals,f),class:'l-val'},svg);
@@ -478,6 +516,9 @@ function renderOne(animate){
     ['Biggest drop','−'+(sim.maxDrop*100).toFixed(0)+'%',sim.maxDrop>.005?'down':''],
     ['Best year',sim.best===null?'–':pct(sim.best)+' (Yr '+sim.bestY+')',sim.best>0?'up':''],
     ['Worst year',sim.worst===null?'–':pct(sim.worst)+' (Yr '+sim.worstY+')',sim.worst<0?'down':'']];
+  $('#legGoal').hidden=!s.goal;
+  if(s.goal){const idx=sim.vals.findIndex(v=>v>=s.goal);
+    st.unshift(['Goal: '+money(s.goal),idx<0?'Short '+money(s.goal-end):idx===0?'Reached now':'Reached '+(idx<=24?'month '+idx:'year '+Math.ceil(idx/12)),idx<0?'down':'up'])}
   $('#oneStats').innerHTML=st.map(([k,v,c])=>`<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
   const need=1000*Math.pow(1.02,s.years);
   $('#inflNote').innerHTML=`<b>Heads up:</b> prices rise over time (about 2% a year). In ${s.years} year${s.years>1?'s':''}, you’d need about <b class="num">${money(need)}</b> to buy what $1,000 buys today.`;
@@ -498,13 +539,15 @@ function runMany(){
   const put=runs[0].contrib[runs[0].N];
   const ends=runs.map(r=>r.vals[r.N]).sort((a,b)=>a-b);
   const lost=ends.filter(v=>v<put-0.5).length,dbl=ends.filter(v=>v>=2*put).length;
-  lastMany={label:summary(),years:s.years,risk:(ASSETS.reduce((t,a)=>t+alloc[a.id]*a.risk,0)+(10-placed()))/10,typical:(ends[49]+ends[50])/2,worst:ends[0],best:ends[99],lost,put};
+  const hits=s.goal?runs.filter(r=>r.vals.some(v=>v>=s.goal)).length:null;
+  lastMany={label:summary(),years:s.years,risk:(ASSETS.reduce((t,a)=>t+alloc[a.id]*a.risk,0)+(10-placed()))/10,typical:(ends[49]+ends[50])/2,worst:ends[0],best:ends[99],lost,put,goal:s.goal,hits};
   const body=$('#manyBody');
   body.innerHTML=`<div class="many-grid"><div><div class="legend"><span><i class="sw" style="background:var(--up)"></i>A future that grew</span><span><i class="sw" style="background:var(--down)"></i>A future that lost money</span><span><i class="sw" style="background:var(--ink)"></i>Typical (middle) future</span><span><i class="sw" style="background:var(--blue)"></i>Money you put in</span></div>
     <div class="chart-wrap"><svg class="chart" id="manyChart" role="img" aria-label="100 possible futures"></svg></div><p class="muted" id="clipNote" style="font-size:.84rem"></p></div>
     <div><h3>Every square is one future</h3><div class="dots" style="margin-top:10px">${ends.map(v=>`<span class="${v<put-0.5?'lost':v>=2*put?'dbl':'grew'}"></span>`).join('')}</div>
     <div class="dot-legend"><span><i style="background:var(--down)"></i>Lost money</span><span><i style="background:var(--up)"></i>Grew</span><span><i style="background:var(--up);box-shadow:inset 0 0 0 2px var(--accent)"></i>More than doubled</span></div>
     <p class="big-say">You lost money in <b>${lost}</b> out of 100 futures.</p>
+    ${s.goal?`<p class="big-say" style="color:var(--goal)">You reached your ${money(s.goal)} goal in <b>${hits}</b> out of 100 futures.</p>`:''}
     <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))">
       <div class="stat"><div class="k">Typical ending</div><div class="v">${money(lastMany.typical)}</div></div>
       <div class="stat"><div class="k">You put in</div><div class="v">${money(put)}</div></div>
@@ -518,8 +561,9 @@ let lastRuns=null;
 function drawMany(runs,put){
   const s=settings(),svg=$('#manyChart');if(!svg)return;
   const allMax=runs.map(r=>Math.max(...r.vals)).sort((a,b)=>a-b);
-  const cap=Math.max(allMax[89],put)*1.08;
+  const cap=Math.max(allMax[89],put,s.goal)*1.08;
   const f=frame(svg,cap,s.years);
+  goalLine(svg,f,s.goal);
   const N=runs[0].N,stride=Math.max(1,Math.round(N/120));
   runs.forEach(r=>el('path',{d:pathOf(r.vals,f,stride),class:r.vals[N]<put-0.5?'sp-down':'sp-up'},svg));
   const med=[];for(let i=0;i<=N;i++){const c=runs.map(r=>r.vals[i]).sort((a,b)=>a-b);med.push((c[49]+c[50])/2)}
@@ -534,15 +578,25 @@ function drawMany(runs,put){
 function saveCompare(){try{localStorage.setItem('rrlab-compare',JSON.stringify(compare))}catch(e){}}
 function renderCompare(){
   $('#compareWrap').hidden=compare.length===0;
-  $('#compareBody').innerHTML=compare.map((c,i)=>`<tr><td>${c.label}</td><td class="n">${c.years}</td><td><span class="risk r${Math.round(c.risk)}">${[1,2,3,4,5].map(n=>`<i class="${n<=Math.round(c.risk)?'on':''}"></i>`).join('')}</span></td><td class="n">${money(c.typical)}<br><span class="muted">put in ${money(c.put)}</span></td><td class="n">${money(c.worst)}</td><td class="n">${money(c.best)}</td><td class="n" style="color:var(${c.lost?'--down':'--up'});font-weight:700">${c.lost} / 100</td><td><button type="button" data-rm="${i}" aria-label="Remove row">Remove</button></td></tr>`).join('');
+  $('#compareBody').innerHTML=compare.map((c,i)=>`<tr><td>${c.label}</td><td class="n">${c.years}</td><td><span class="risk r${Math.round(c.risk)}">${[1,2,3,4,5].map(n=>`<i class="${n<=Math.round(c.risk)?'on':''}"></i>`).join('')}</span></td><td class="n">${money(c.typical)}<br><span class="muted">put in ${money(c.put)}</span></td><td class="n">${money(c.worst)}</td><td class="n">${money(c.best)}</td><td class="n" style="color:var(${c.lost?'--down':'--up'});font-weight:700">${c.lost} / 100</td><td class="n">${c.goal?c.hits+' / 100<br><span class="muted">goal '+money(c.goal)+'</span>':'–'}</td><td><button type="button" data-rm="${i}" aria-label="Remove row">Remove</button></td></tr>`).join('');
   document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{compare.splice(+b.dataset.rm,1);saveCompare();renderCompare()});
 }
 
 /* ---------- wiring ---------- */
 function stale(){if(lastMany){$('#manyBody').innerHTML='<div class="empty-state">Your portfolio changed. Press <b>Play 100 futures</b> to test it.</div>';$('#addCompare').hidden=true;lastMany=null;lastRuns=null}}
 function changed(){renderBuilder();renderOne(false);stale()}
-['start','monthly','years'].forEach(id=>$('#'+id).addEventListener('input',changed));
-document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=PRESETS[+b.dataset.p];$('#start').value=p[0];$('#monthly').value=p[1];$('#years').value=p[2];changed()});
+['start','monthly','years','goal'].forEach(id=>$('#'+id).addEventListener('input',changed));
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=PRESETS[+b.dataset.p];$('#start').value=p[0];$('#monthly').value=p[1];$('#years').value=p[2];$('#goal').value=0;changed()});
+$('#scenList').innerHTML=SCEN.map((sc,i)=>{const t=sc.set,held=ASSETS.filter(a=>t.chips[a.id]).map(a=>t.chips[a.id]+' chips: '+a.name),left=10-Object.values(t.chips).reduce((x,y)=>x+y,0);
+  if(left)held.push(left+' chips: under the mattress');
+  return`<li><div><span class="tag g7">Gr 7</span> <span class="tag">${sc.tag}</span></div><h3>${sc.title}</h3><p class="story">${sc.story}</p>
+  <div class="facts"><span>Start ${money(t.start)}</span><span>${money(t.monthly)}/month</span><span>${t.years} yr${t.years>1?'s':''}</span>${t.goal?`<span>Goal ${money(t.goal)}</span>`:''}<span>${held.join(' · ')}</span></div>
+  <ol>${sc.qs.map(q=>`<li>${q}</li>`).join('')}</ol>
+  <button class="btn gold" type="button" data-scen="${i}">Load this scenario</button></li>`}).join('');
+document.querySelectorAll('[data-scen]').forEach(b=>b.onclick=()=>{const t=SCEN[+b.dataset.scen].set;
+  $('#start').value=t.start;$('#monthly').value=t.monthly;$('#years').value=t.years;$('#goal').value=t.goal;
+  ASSETS.forEach(a=>alloc[a.id]=t.chips[a.id]||0);seed=1;changed();renderOne(true);
+  const rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;document.querySelector('.lab').scrollIntoView({behavior:rm?'auto':'smooth',block:'start'})});
 $('#again').onclick=()=>{seed++;renderOne(true)};
 $('#replay').onclick=()=>{if(lastOne)drawOne(true)};
 $('#run100').onclick=runMany;
