@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Investing simulator for students: build a portfolio, watch possible futures, and learn about risk and volatility.">
+<title>Risk &amp; Reward Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: lab bench — portfolio builder (left) beside the live future chart (right), then the 100-futures test, then vocabulary, missions and teacher notes */
+:root{
+  --bg:#ECF1EC; --panel:#FFFFFF; --panel-2:#F5F8F5; --ink:#15231C; --muted:#56665D; --line:#D2DCD4;
+  --accent:#B87A08; --accent-soft:#F6E7C6; --chip:#E2AE38; --chip-edge:#9A6A0A;
+  --up:#1D8A52; --up-soft:#D7EFE1; --down:#C03C2B; --down-soft:#F7DDD8; --blue:#2C6A91; --dim:#9DAEA4;
+  --f-display:"Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1512; --panel:#17201B; --panel-2:#1C2721; --ink:#E5EEE8; --muted:#9BACA2; --line:#2C3A32;
+  --accent:#E6A93D; --accent-soft:#3A2E14; --chip:#E2AE38; --chip-edge:#8E6209;
+  --up:#4FC488; --up-soft:#173726; --down:#F06A57; --down-soft:#3D1D18; --blue:#6EAAD4; --dim:#5D6E64; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E1512; --panel:#17201B; --panel-2:#1C2721; --ink:#E5EEE8; --muted:#9BACA2; --line:#2C3A32;
+  --accent:#E6A93D; --accent-soft:#3A2E14; --chip:#E2AE38; --chip-edge:#8E6209;
+  --up:#4FC488; --up-soft:#173726; --down:#F06A57; --down-soft:#3D1D18; --blue:#6EAAD4; --dim:#5D6E64; color-scheme:dark }
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.55}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+h2{font-size:1.55rem;font-weight:800}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.muted{color:var(--muted)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* header */
+.top{padding-block:36px 26px}
+.top .wrap{display:grid;gap:14px}
+.top h1{font-size:clamp(2.3rem,6vw,3.9rem);font-weight:800;letter-spacing:-.02em}
+.top h1 span{color:var(--accent)}
+.lede{max-width:62ch;font-size:1.12rem}
+.how{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-wrap:wrap;gap:10px}
+.how li{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px}
+.how li b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);font-family:var(--f-mono);font-size:.85rem}
+
+main{display:grid;gap:22px;padding-block:0 48px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.panel-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:14px}
+
+.lab{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:920px){.lab{grid-template-columns:minmax(0,1fr)}}
+
+/* settings */
+.settings{display:grid;gap:12px;padding:14px;background:var(--panel-2);border-radius:10px;margin-bottom:16px}
+.setting label{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:.95rem}
+.setting output{font-family:var(--f-mono);color:var(--accent);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:.85rem}
+.presets button:hover{border-color:var(--accent)}
+
+/* chips */
+.chipbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.chipbar .left{font-weight:700}
+.riskmeter{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.coin{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--chip);border:2px solid var(--chip-edge);box-shadow:inset 0 -2px 0 var(--chip-edge)}
+.coin.empty{background:transparent;border:2px dashed var(--dim);box-shadow:none}
+.group-title{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:16px 0 6px;font-weight:700}
+.asset{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:6px;margin-bottom:8px;transition:border-color .15s, background .15s}
+.asset.held{border-color:var(--accent);background:var(--accent-soft)}
+.a-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.a-kind{font-size:.78rem;color:var(--muted)}
+.risk{display:flex;gap:3px;flex:none;padding-top:4px}
+.risk i{width:9px;height:16px;border-radius:2px;background:var(--line)}
+.risk i.on{background:var(--down)}
+.risk.r1 i.on,.risk.r2 i.on{background:var(--up)}
+.risk.r3 i.on{background:var(--accent)}
+.a-blurb{font-size:.92rem}
+.a-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.a-stats{display:flex;gap:14px;font-size:.85rem;color:var(--muted)}
+.a-stats b{color:var(--ink);font-family:var(--f-mono)}
+.ctrl{display:flex;align-items:center;gap:6px}
+.ctrl button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:1.1rem;line-height:1}
+.ctrl button:hover:not(:disabled){border-color:var(--accent)}
+.ctrl button:disabled{opacity:.35;cursor:not-allowed}
+.ctrl .coins{display:flex;gap:2px;min-width:22px;flex-wrap:wrap;max-width:110px}
+.ctrl .coins .coin{width:13px;height:13px;border-width:2px}
+.ctrl .pct{font-family:var(--f-mono);font-weight:700;width:3.2em;text-align:right}
+.mattress{background:var(--panel-2);border-style:dashed}
+
+/* future */
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:700;background:var(--ink);color:var(--bg)}
+.btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn.gold{background:var(--accent);color:var(--bg)}
+.btn:hover{filter:brightness(1.08)}
+.chart-wrap{position:relative;width:100%}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--dim);stroke-width:1}
+.chart .l-val{fill:none;stroke:var(--accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.chart .area{fill:var(--accent);opacity:.12}
+.chart .l-in{fill:none;stroke:var(--blue);stroke-width:2;stroke-dasharray:6 5}
+.chart .mk circle{stroke:var(--panel);stroke-width:2}
+.chart .mk.down circle{fill:var(--down)} .chart .mk.up circle{fill:var(--up)}
+.chart .mk text{fill:var(--panel);font-size:10px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+.chart .sp-up{fill:none;stroke:var(--up);stroke-width:1;opacity:.28}
+.chart .sp-down{fill:none;stroke:var(--down);stroke-width:1;opacity:.4}
+.chart .l-med{fill:none;stroke:var(--ink);stroke-width:3}
+.chart .lbl{font-family:var(--f-body);font-size:12px;font-weight:700}
+.chart .lbl.val{fill:var(--accent)} .chart .lbl.in{fill:var(--blue)} .chart .lbl.med{fill:var(--ink)}
+.draw{animation:draw 1.8s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.pop{opacity:0;animation:pop .3s ease-out forwards}
+@keyframes pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.draw{animation:none;stroke-dashoffset:0!important}.pop{animation:none;opacity:1}}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted);margin:6px 0 4px}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:18px;height:4px;border-radius:2px;display:inline-block}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--panel-2);border-radius:10px;padding:10px 12px;min-width:0}
+.stat .k{font-size:.8rem;color:var(--muted)}
+.stat .v{font-family:var(--f-mono);font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.v.up{color:var(--up)} .v.down{color:var(--down)}
+.note{font-size:.88rem;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:8px 12px}
+
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:16px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+.events{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px;max-height:330px;overflow:auto}
+.events li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.events .n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-family:var(--f-mono);font-size:.75rem;font-weight:700;color:var(--panel)}
+.events .n.down{background:var(--down)} .events .n.up{background:var(--up)} .events .n.none{background:var(--dim)}
+.events b{font-size:.93rem} .events p{font-size:.85rem;color:var(--muted)}
+.imp{font-family:var(--f-mono);font-weight:700;font-size:.9rem;white-space:nowrap}
+.imp.up{color:var(--up)} .imp.down{color:var(--down)} .imp.none{color:var(--muted);font-weight:500}
+.bars{display:grid;gap:10px;margin-top:8px}
+.bar-row{display:grid;gap:3px}
+.bar-top{display:flex;justify-content:space-between;gap:8px;font-size:.9rem}
+.bar-track{height:12px;border-radius:6px;background:var(--panel-2);overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;background:var(--accent)}
+.bar-sub{font-size:.8rem;color:var(--muted)}
+
+/* 100 futures */
+.many-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.many-grid{grid-template-columns:minmax(0,1fr)}}
+.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:300px}
+.dots span{aspect-ratio:1;border-radius:4px;background:var(--line);max-width:100%}
+.dots .lost{background:var(--down)} .dots .grew{background:var(--up)} .dots .dbl{background:var(--up);box-shadow:inset 0 0 0 3px var(--accent)}
+.dot-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted);margin-top:8px}
+.dot-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.big-say{font-size:1.15rem;margin:10px 0}
+.big-say b{font-family:var(--f-mono)}
+.empty-state{padding:30px 16px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:10px}
+.table-wrap{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:2px 8px;font-size:.8rem}
+
+/* glossary & missions */
+.words{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:12px}
+.word{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel-2)}
+.word h3{font-size:1rem;margin-bottom:4px}
+.word p{font-size:.9rem}
+.word .ex{color:var(--muted);font-size:.84rem;margin-top:4px}
+.missions{list-style:none;padding:0;margin:12px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.missions li{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:6px;align-content:start}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:.7rem;font-weight:700;letter-spacing:.05em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.g8{border-color:var(--blue);color:var(--blue)} .tag.g9{border-color:var(--accent);color:var(--accent)}
+.missions .q{font-size:.92rem}
+.missions .try{font-size:.88rem;color:var(--muted)}
+details.teacher summary{cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:1.25rem}
+.teacher-body{display:grid;gap:14px;margin-top:14px;font-size:.93rem}
+.teacher-body ul{margin:4px 0 0;padding-left:20px}
+.teacher-body code{font-family:var(--f-mono);font-size:.82rem;background:var(--panel-2);padding:1px 5px;border-radius:4px}
+footer{font-size:.84rem;color:var(--muted);max-width:75ch}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <p class="eyebrow">Investing simulator · Saving, investing &amp; risk</p>
+  <h1>Risk <span>&amp;</span> Reward Lab</h1>
+  <p class="lede">Choose where your money goes, then watch what <em>could</em> happen over the years. Every run is a different possible future, just like real life. Nobody knows the future, not even the experts.</p>
+  <ol class="how">
+    <li><b>1</b>Place your 10 money chips</li>
+    <li><b>2</b>Watch one possible future</li>
+    <li><b>3</b>Test 100 futures to see the risk</li>
+  </ol>
+</div></header>
+
+<main class="wrap">
+<section class="lab">
+  <div class="panel">
+    <div class="panel-head"><h2>Build your portfolio</h2></div>
+    <div class="settings">
+      <div class="presets" aria-label="Quick start examples">
+        <button type="button" data-p="0">Birthday money</button>
+        <button type="button" data-p="1">Part-time job</button>
+        <button type="button" data-p="2">Saving for college</button>
+        <button type="button" data-p="3">Retirement (long!)</button>
+      </div>
+      <div class="setting"><label for="start">Money to start <output id="startOut"></output></label><input id="start" type="range" min="0" max="10000" step="100" value="1000"></div>
+      <div class="setting"><label for="monthly">Add every month <output id="monthlyOut"></output></label><input id="monthly" type="range" min="0" max="500" step="5" value="25"></div>
+      <div class="setting"><label for="years">How many years <output id="yearsOut"></output></label><input id="years" type="range" min="1" max="40" step="1" value="10"></div>
+    </div>
+    <div class="chipbar">
+      <span class="left" id="chipsLeft"></span>
+      <span class="riskmeter">Portfolio risk <span class="risk" id="pRisk"></span></span>
+    </div>
+    <p class="muted" style="font-size:.88rem">Each chip is 10% of your money. Use + and − to place chips.</p>
+    <div id="assetList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow" id="futureNo">Future #1</p><h2>One possible future</h2></div>
+      <div class="btns">
+        <button class="btn gold" id="again" type="button">Play another future</button>
+        <button class="btn alt" id="replay" type="button">Replay</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--accent)"></i>Your money</span>
+      <span><i class="sw" style="background:var(--blue)"></i>Money you put in</span>
+      <span><i class="sw" style="background:var(--down);width:10px;height:10px;border-radius:50%"></i>Bad news</span>
+      <span><i class="sw" style="background:var(--up);width:10px;height:10px;border-radius:50%"></i>Good news</span>
+    </div>
+    <div class="chart-wrap"><svg class="chart" id="oneChart" role="img" aria-label="Line chart of your money over time"></svg></div>
+    <div class="stats" id="oneStats"></div>
+    <p class="note" id="inflNote"></p>
+    <div class="two">
+      <div><h3>What happened</h3><ul class="events" id="events"></ul></div>
+      <div><h3>Where your money ended up</h3><div class="bars" id="bars"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="many">
+  <div class="panel-head">
+    <div><p class="eyebrow">The risk test</p><h2>100 possible futures</h2>
+    <p class="muted" style="max-width:60ch;margin-top:4px">One future can be lucky or unlucky. Run your portfolio 100 times to see the whole range of what could happen.</p></div>
+    <div class="btns"><button class="btn gold" id="run100" type="button">Play 100 futures</button><button class="btn alt" id="addCompare" type="button" hidden>Add to comparison table</button></div>
+  </div>
+  <div id="manyBody"><div class="empty-state">Press <b>Play 100 futures</b> to test your portfolio.</div></div>
+  <div id="compareWrap" hidden>
+    <h3 style="margin-top:22px">My comparison table</h3>
+    <p class="muted" style="font-size:.88rem">Try different portfolios and add each one here to compare.</p>
+    <div class="table-wrap"><table><thead><tr><th>Portfolio</th><th>Years</th><th>Risk</th><th>Typical ending</th><th>Worst</th><th>Best</th><th>Lost money</th><th></th></tr></thead><tbody id="compareBody"></tbody></table></div>
+  </div>
+</section>
+
+<section class="panel">
+  <p class="eyebrow">Words to know</p><h2>Investing vocabulary</h2>
+  <div class="words">
+    <div class="word"><h3>Principal</h3><p>The money you start with or put in.</p><p class="ex">You put $1,000 in. Your principal is $1,000.</p></div>
+    <div class="word"><h3>Interest</h3><p>Money the bank pays you for keeping your money there. (Or money you pay when you borrow.)</p><p class="ex">2% interest on $1,000 = $20 a year.</p></div>
+    <div class="word"><h3>Rate</h3><p>The percent of interest or growth per year.</p><p class="ex">A savings account rate of 2%.</p></div>
+    <div class="word"><h3>Compound interest</h3><p>Earning interest on your interest. Your money grows faster the longer you wait.</p><p class="ex">Year 1: $1,000 → $1,070. Year 2: you earn on $1,070, not $1,000.</p></div>
+    <div class="word"><h3>Saving</h3><p>Putting money aside somewhere safe for later.</p><p class="ex">Savings account, GIC.</p></div>
+    <div class="word"><h3>Investing</h3><p>Putting money into something you hope will grow. It might also shrink.</p><p class="ex">Funds, stocks, crypto.</p></div>
+    <div class="word"><h3>Return</h3><p>How much your money grew or shrank, shown as a percent.</p><p class="ex">$100 became $110. Return = +10%.</p></div>
+    <div class="word"><h3>Risk</h3><p>The chance you could lose money. Higher risk can mean bigger wins <em>and</em> bigger losses.</p><p class="ex">MoonCoin is high risk. A GIC is low risk.</p></div>
+    <div class="word"><h3>Volatility</h3><p>How much a price bounces up and down. Big bounces = high volatility.</p><p class="ex">A bumpy line on the chart.</p></div>
+    <div class="word"><h3>Stock (share)</h3><p>A tiny piece of one company. If the company does well, your piece is worth more.</p><p class="ex">1 share of MapleByte Tech.</p></div>
+    <div class="word"><h3>Index fund</h3><p>One purchase that holds pieces of hundreds of companies at once.</p><p class="ex">Canada index fund = 200+ companies.</p></div>
+    <div class="word"><h3>Diversification</h3><p>Spreading money around so one bad thing can't sink you. "Don't put all your eggs in one basket."</p><p class="ex">4 different chips instead of 10 on one stock.</p></div>
+  </div>
+</section>
+
+<section class="panel">
+  <p class="eyebrow">Try these</p><h2>Missions</h2>
+  <ul class="missions">
+    <li><div><span class="tag">Gr 8 + Gr 9</span></div><h3>Under the mattress</h3><p class="q">Take every chip off. Play 100 futures. Did you ever lose money? Read the note about prices rising. Is cash really "safe"?</p></li>
+    <li><div><span class="tag g8">Gr 8</span></div><h3>Steady vs bouncy</h3><p class="q">Put all 10 chips on Savings. Play 100 futures and add it to your table. Now try all 10 on the Canada index fund.</p><p class="try">Which had the higher typical ending? Which one ever lost money?</p></li>
+    <li><div><span class="tag">Gr 8 + Gr 9</span></div><h3>All eggs, one basket</h3><p class="q">Put all 10 chips on MapleByte Tech. Count the red squares. Then spread chips over Grocers, Prairie Power, MapleByte and the World index fund.</p><p class="try">How did spreading out change the red squares?</p></li>
+    <li><div><span class="tag">Gr 8 + Gr 9</span></div><h3>Time is your friend</h3><p class="q">Use all 10 chips on the Canada index fund. Test 2 years, then 25 years.</p><p class="try">In which time frame is losing money <em>more likely</em>? Why?</p></li>
+    <li><div><span class="tag g9">Gr 9</span></div><h3>The MoonCoin mystery</h3><p class="q">MoonCoin has the best "average year" on its card. So why do so many futures end in red?</p><p class="try">Hint: if you lose 50%, how much do you need to gain to get back to where you started?</p></li>
+    <li><div><span class="tag g9">Gr 9</span></div><h3>Build for a goal</h3><p class="q">Build one portfolio for college in 4 years and another for retirement in 40 years. Test both.</p><p class="try">Explain your choices using <b>risk</b>, <b>volatility</b> and <b>time</b>.</p></li>
+  </ul>
+</section>
+
+<section class="panel">
+  <details class="teacher">
+    <summary>Teacher notes</summary>
+    <div class="teacher-body">
+      <div><b>Target outcomes</b>
+        <ul>
+          <li><code>CEFL8 FL 8.5</code> saving vs investing, return, risk, principal, rate, compound interest (the core of this lab)</li>
+          <li><code>CEFL9 FL 9.5</code> (understanding) compound interest amplifies growth and debt; time and rate are the key variables. Bridge to the Unit 4 credit card payoff: the same curve that grows savings grows a balance.</li>
+          <li><code>MATH8 N11</code> / <code>MATH9 N12</code> percents · <code>MATH8 SP2</code> / <code>MATH9 SP1</code> interpret graphs · <code>MATH9 SP5</code> trends, extremes, clusters · <code>MATH8 SP7</code> same experiment, different outcomes · <code>MATH9 SP7</code> probability vocabulary (more/less likely, best/worst)</li>
+          <li><code>ELA9 3.2.2</code> fact vs opinion (extension: compare a real "get rich fast" crypto ad with what the 100-futures test shows)</li>
+        </ul></div>
+      <div><b>Side-by-side pathways</b>
+        <ul>
+          <li><b>Grade 8:</b> Missions 1–4. Record the comparison table on paper. Sentence frame: "In ___ out of 100 futures I lost money. The safest choice was ___ because ___."</li>
+          <li><b>Grade 9:</b> Missions 3–6. Write a short recommendation for a younger student, using risk, volatility, diversification and time horizon. Preview of Unit 4: debt grows with the same math.</li>
+        </ul></div>
+      <div><b>Differentiation</b>
+        <ul>
+          <li>Plain-language cards and a readable typeface; read the vocabulary cards aloud together first.</li>
+          <li>The 100-square grid lets students count outcomes instead of calculating percents (100 squares = 100%).</li>
+          <li>Pair a strong reader with a weaker reader on missions; one runs the simulator, one records.</li>
+          <li>Extension: ask why the "average year" on a card is not the same as what usually happens (volatility drag).</li>
+        </ul></div>
+      <div><b>About the numbers</b> All companies and coins are made up. Growth rates and bounce sizes are rough, illustrative versions of long-run patterns (cash ≈ 0%, savings ≈ 2%, bonds ≈ 4%, broad stock funds ≈ 7% with large swings). The simulator does not recommend any real product. Each "future" number uses the same market luck when students change chips, so they see the effect of their choices; "Play another future" changes the luck.</div>
+    </div>
+  </details>
+</section>
+
+<footer>Made-up companies and numbers for learning only. Real investments behave differently, and past results never promise future ones.</footer>
+</main>
+
+<script>
+(function(){
+const ASSETS=[
+ {id:'save',group:'Safe & steady',name:'High-interest savings account',kind:'Bank account',risk:1,mu:.02,sigma:0,rho:0,sens:{},blurb:'Safe at the bank. Earns a little interest every month.'},
+ {id:'gic',group:'Safe & steady',name:'GIC',kind:'Bank deposit · locked in',risk:1,mu:.035,sigma:0,rho:0,sens:{},blurb:'You lock your money in and get a fixed rate. No surprises, but you can’t take it out early.'},
+ {id:'bond',group:'Funds (many investments in one)',name:'Bond fund',kind:'Fund · loans to governments & companies',risk:2,mu:.04,sigma:.05,rho:.2,sens:{crash:-.12,boom:.1},blurb:'You lend money and get paid back with interest. Small bounces.'},
+ {id:'can',group:'Funds (many investments in one)',name:'Canada index fund',kind:'Fund · 200+ Canadian companies',risk:3,mu:.07,sigma:.15,rho:.95,sens:{crash:1,boom:1,oil:.3},blurb:'A little piece of hundreds of Canadian companies, all at once.'},
+ {id:'world',group:'Funds (many investments in one)',name:'World index fund',kind:'Fund · thousands of companies worldwide',risk:3,mu:.075,sigma:.15,rho:.9,sens:{crash:.9,boom:.9,tech:.1},blurb:'Pieces of companies all over the world. Very spread out.'},
+ {id:'groc',group:'Single companies',name:'Northern Grocers',kind:'One company · grocery stores',risk:4,mu:.065,sigma:.2,rho:.5,sens:{crash:.5,boom:.4,groc:1},blurb:'People always buy food, so it’s steadier than most single stocks.'},
+ {id:'energy',group:'Single companies',name:'Prairie Power Energy',kind:'One company · oil & gas',risk:4,mu:.075,sigma:.3,rho:.6,sens:{crash:1.1,boom:1.1,oil:1},blurb:'Rises and falls with the price of oil.'},
+ {id:'tech',group:'Single companies',name:'MapleByte Tech',kind:'One company · apps & gadgets',risk:5,mu:.11,sigma:.4,rho:.6,sens:{crash:1.4,boom:1.4,tech:1},blurb:'Could be the next big thing. Could flop.'},
+ {id:'coin',group:'Wild card',name:'MoonCoin',kind:'Crypto coin',risk:5,mu:.12,sigma:.7,rho:.3,sens:{crash:1.5,boom:1.2,coin:1},blurb:'Huge hype, huge swings. Price depends on what people feel like paying.'}
+];
+const EVENTS=[
+ {k:'crash',p:.08,s:-.25,t:'Stock market crash',d:'Fear spreads and stock prices drop fast.'},
+ {k:'boom',p:.12,s:.15,t:'The economy is booming',d:'People are spending and companies earn more.'},
+ {k:'oil',p:.08,s:-.3,t:'Oil prices drop',d:'Oil sells for less, so energy companies earn less.'},
+ {k:'oil',p:.08,s:.25,t:'Oil prices jump',d:'Oil sells for more, so energy companies earn more.'},
+ {k:'tech',p:.06,s:.4,t:'MapleByte launches a hit gadget',d:'Everyone wants one. Sales explode.'},
+ {k:'tech',p:.06,s:-.35,t:'MapleByte gadget recall',d:'Batteries overheat. Every gadget gets sent back.'},
+ {k:'groc',p:.05,s:.15,t:'Northern Grocers opens 40 new stores',d:'More stores means more sales.'},
+ {k:'groc',p:.04,s:-.2,t:'Northern Grocers food-safety scare',d:'Shoppers stay away for a while.'},
+ {k:'coin',p:.1,s:-.5,t:'MoonCoin hack scare',d:'Rumours of a hack. People rush to sell.'},
+ {k:'coin',p:.1,s:.7,t:'MoonCoin goes viral',d:'A celebrity posts about it and the price shoots up.'}
+];
+const PRESETS=[[500,0,5],[0,100,10],[2000,50,4],[1000,100,40]];
+
+const $=s=>document.querySelector(s);
+const alloc={}; ASSETS.forEach(a=>alloc[a.id]=0);
+alloc.can=5; alloc.bond=3; alloc.save=2;
+let seed=1, lastMany=null;
+let compare=[];
+try{compare=JSON.parse(localStorage.getItem('rrlab-compare')||'[]')||[]}catch(e){compare=[]}
+
+const placed=()=>ASSETS.reduce((t,a)=>t+alloc[a.id],0);
+const money=v=>(v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-CA');
+const signMoney=v=>(v>=0?'+':'−')+'$'+Math.round(Math.abs(v)).toLocaleString('en-CA');
+const pct=v=>(v>=0?'+':'−')+Math.abs(v*100).toFixed(0)+'%';
+const short=v=>{const a=Math.abs(v);return a>=1e6?'$'+(v/1e6).toFixed(a>=1e7?0:1)+'M':a>=1e3?'$'+(v/1e3).toFixed(a>=1e4?0:1)+'k':'$'+Math.round(v)};
+const bounce=s=>s===0?'None':s<=.06?'Small':s<=.16?'Medium':s<=.3?'Big':s<=.45?'Huge':'Wild';
+const settings=()=>({start:+$('#start').value,monthly:+$('#monthly').value,years:+$('#years').value});
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function randn(r){const u=r()||1e-9,v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+
+function simulate(al,start,monthly,years,sd){
+  const r=mulberry32(sd*7919+13),N=years*12;
+  const w=ASSETS.map(a=>al[a.id]/10), wc=1-w.reduce((x,y)=>x+y,0);
+  const hold=w.map(x=>start*x); let cash=start*wc;
+  const vals=[start],contrib=[start],events=[];let sched=[];
+  const sum=()=>hold.reduce((x,y)=>x+y,0)+cash;
+  for(let m=1;m<=N;m++){
+    if((m-1)%12===0){sched=[];EVENTS.forEach(ev=>{const hit=r()<ev.p;const mo=m+Math.floor(r()*12);if(hit)sched.push({ev,mo})})}
+    const zm=randn(r);
+    ASSETS.forEach((a,i)=>{const zi=randn(r);
+      if(a.sigma>0){const s=a.sigma/Math.sqrt(12),z=a.rho*zm+Math.sqrt(1-a.rho*a.rho)*zi;hold[i]*=Math.exp(Math.log(1+a.mu)/12-s*s/2+s*z)}
+      else hold[i]*=Math.pow(1+a.mu,1/12)});
+    sched.filter(x=>x.mo===m).forEach(({ev})=>{const before=sum();
+      ASSETS.forEach((a,i)=>{const k=a.sens[ev.k]||0;if(k)hold[i]*=Math.max(.05,1+ev.s*k)});
+      events.push({m,ev,impact:sum()-before,value:sum()})});
+    w.forEach((x,i)=>hold[i]+=monthly*x);cash+=monthly*wc;
+    vals.push(sum());contrib.push(start+monthly*m);
+  }
+  let best=null,worst=null,bestY=0,worstY=0;
+  for(let y=0;y<years;y++){const v0=vals[y*12],v1=vals[y*12+12],add=monthly*12,den=v0+add/2;if(den<=0)continue;
+    const ret=(v1-add-v0)/den;if(best===null||ret>best){best=ret;bestY=y+1}if(worst===null||ret<worst){worst=ret;worstY=y+1}}
+  let peak=0,maxDrop=0;vals.forEach(v=>{peak=Math.max(peak,v);if(peak>0)maxDrop=Math.max(maxDrop,(peak-v)/peak)});
+  return{vals,contrib,hold,cash,w,wc,events,best,worst,bestY,worstY,maxDrop,N};
+}
+
+/* ---------- builder ---------- */
+function riskBars(n,el){el.className='risk r'+Math.max(1,Math.round(n));el.innerHTML='';for(let i=1;i<=5;i++){const b=document.createElement('i');if(i<=Math.round(n))b.className='on';el.appendChild(b)}el.setAttribute('aria-label','Risk '+Math.round(n)+' out of 5')}
+function buildList(){
+  const list=$('#assetList');list.innerHTML='';
+  const m=document.createElement('div');m.className='asset mattress';m.id='mattressRow';list.appendChild(m);
+  let g='';
+  ASSETS.forEach(a=>{
+    if(a.group!==g){g=a.group;const h=document.createElement('p');h.className='group-title';h.textContent=g;list.appendChild(h)}
+    const d=document.createElement('div');d.className='asset';d.dataset.id=a.id;
+    d.innerHTML=`<div class="a-head"><div><span class="a-kind">${a.kind}</span><h3>${a.name}</h3></div><span class="risk"></span></div>
+      <p class="a-blurb">${a.blurb}</p>
+      <div class="a-row"><div class="a-stats"><span>Average year <b>+${(a.mu*100).toFixed(a.mu*100%1?1:0)}%</b></span><span>Bounce <b>${bounce(a.sigma)}</b></span></div>
+      <div class="ctrl"><button type="button" class="minus" aria-label="Remove a chip from ${a.name}">−</button><div class="coins"></div><button type="button" class="plus" aria-label="Add a chip to ${a.name}">+</button><span class="pct"></span></div></div>`;
+    riskBars(a.risk,d.querySelector('.risk'));
+    d.querySelector('.minus').onclick=()=>{if(alloc[a.id]>0){alloc[a.id]--;changed()}};
+    d.querySelector('.plus').onclick=()=>{if(placed()<10){alloc[a.id]++;changed()}};
+    list.appendChild(d);
+  });
+}
+function renderBuilder(){
+  const left=10-placed();
+  $('#chipsLeft').innerHTML=`Chips left: <span class="num">${left}</span> `+Array.from({length:10},(_,i)=>`<i class="coin ${i<left?'':'empty'}" style="width:12px;height:12px;vertical-align:-1px"></i>`).join(' ');
+  const pr=(ASSETS.reduce((t,a)=>t+alloc[a.id]*a.risk,0)+left*1)/10;riskBars(pr,$('#pRisk'));
+  $('#mattressRow').innerHTML=`<div class="a-row"><div><span class="a-kind">Chips you haven’t placed</span><h3>Under the mattress (cash)</h3><p class="a-blurb">Grows 0%. Can’t drop, but can’t grow either.</p></div><span class="pct num" style="font-weight:700">${left*10}%</span></div>`;
+  document.querySelectorAll('.asset[data-id]').forEach(d=>{const n=alloc[d.dataset.id];
+    d.classList.toggle('held',n>0);
+    d.querySelector('.coins').innerHTML=Array.from({length:n},()=>'<i class="coin"></i>').join('');
+    d.querySelector('.pct').textContent=n*10+'%';
+    d.querySelector('.minus').disabled=n===0;d.querySelector('.plus').disabled=placed()>=10});
+  const s=settings();
+  $('#startOut').textContent=money(s.start);$('#monthlyOut').textContent=money(s.monthly);$('#yearsOut').textContent=s.years+(s.years===1?' year':' years');
+}
+function summary(){const parts=ASSETS.filter(a=>alloc[a.id]).map(a=>alloc[a.id]+' '+a.name.replace('High-interest savings account','Savings'));const left=10-placed();if(left)parts.push(left+' Cash');return parts.join(' · ')}
+
+/* ---------- charts ---------- */
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function niceStep(raw){const p=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/p;return(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
+function frame(svg,maxY,years){
+  const W=Math.max(300,svg.parentNode.clientWidth),H=W<520?250:310,L=52,R=W<520?14:90,T=14,B=30;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML='';
+  const step=niceStep(maxY/4)||1,top=Math.ceil(maxY/step)*step||1;
+  const x=m=>L+(m/(years*12))*(W-L-R),y=v=>T+(1-v/top)*(H-T-B);
+  for(let v=0;v<=top+1e-6;v+=step){el('line',{x1:L,x2:W-R,y1:y(v),y2:y(v),class:'grid'},svg);const t=el('text',{x:L-8,y:y(v)+4,'text-anchor':'end'},svg);t.textContent=short(v)}
+  const ys=years<=10?1:years<=20?2:5;
+  for(let yr=0;yr<=years;yr+=ys){const t=el('text',{x:x(yr*12),y:H-10,'text-anchor':'middle'},svg);t.textContent=yr===0?'Now':'Yr '+yr}
+  el('line',{x1:L,x2:W-R,y1:y(0),y2:y(0),class:'axis'},svg);
+  return{W,H,L,R,T,B,x,y,top};
+}
+const pathOf=(arr,f,stride=1)=>{let d='';for(let i=0;i<arr.length;i+=stride)d+=(i?'L':'M')+f.x(i).toFixed(1)+','+f.y(Math.min(arr[i],f.top*1.02)).toFixed(1);if((arr.length-1)%stride)d+='L'+f.x(arr.length-1).toFixed(1)+','+f.y(Math.min(arr[arr.length-1],f.top*1.02)).toFixed(1);return d};
+function endLabel(svg,f,txt,v,cls,dy){if(f.R<40)return;const t=el('text',{x:f.W-f.R+8,y:f.y(Math.min(v,f.top))+4+(dy||0),class:'lbl '+cls},svg);t.textContent=txt}
+
+let lastOne=null;
+function drawOne(animate){
+  const s=settings(),sim=lastOne,svg=$('#oneChart');
+  const maxY=Math.max(...sim.vals,...sim.contrib,10)*1.06;
+  const f=frame(svg,maxY,s.years);
+  const area=el('path',{d:pathOf(sim.vals,f)+`L${f.x(sim.N)},${f.y(0)}L${f.x(0)},${f.y(0)}Z`,class:'area'},svg);
+  el('path',{d:pathOf(sim.contrib,f),class:'l-in'},svg);
+  const p=el('path',{d:pathOf(sim.vals,f),class:'l-val'},svg);
+  const yIn=f.y(sim.contrib[sim.N]),yV=f.y(Math.min(sim.vals[sim.N],f.top));const close=Math.abs(yIn-yV)<14,off=close?(yV<yIn?-8:8):0;
+  endLabel(svg,f,short(sim.vals[sim.N]),sim.vals[sim.N],'val',off);endLabel(svg,f,short(sim.contrib[sim.N])+' in',sim.contrib[sim.N],'in',-off);
+  const dur=1.8;
+  if(animate){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;p.classList.add('draw');area.style.opacity=0;setTimeout(()=>{area.style.transition='opacity .4s';area.style.opacity=''},dur*1000)}
+  let n=0;
+  sim.events.forEach(e=>{n++;if(Math.abs(e.impact)<0.5)return;
+    const g=el('g',{class:'mk '+(e.impact<0?'down':'up')},svg);
+    const cx=f.x(e.m),cy=f.y(Math.min(e.value,f.top));
+    el('circle',{cx,cy,r:9},g);const t=el('text',{x:cx,y:cy},g);t.textContent=n;
+    const ti=el('title',{},g);ti.textContent=`Year ${Math.ceil(e.m/12)}: ${e.ev.t} (${signMoney(e.impact)})`;
+    if(animate){g.classList.add('pop');g.style.transformOrigin=cx+'px '+cy+'px';g.style.animationDelay=(e.m/sim.N*dur)+'s'}
+  });
+}
+function renderOne(animate){
+  const s=settings();
+  if(s.start===0&&s.monthly===0){$('#oneChart').innerHTML='';$('#oneStats').innerHTML='<div class="empty-state" style="grid-column:1/-1">Add some starting money or a monthly amount to begin.</div>';$('#events').innerHTML='';$('#bars').innerHTML='';$('#inflNote').hidden=true;return}
+  $('#inflNote').hidden=false;
+  lastOne=simulate(alloc,s.start,s.monthly,s.years,seed);const sim=lastOne;
+  $('#futureNo').textContent='Future #'+seed;
+  drawOne(animate);
+  const end=sim.vals[sim.N],put=sim.contrib[sim.N],gain=end-put;
+  const st=[['You end with',money(end),''],['You put in',money(put),''],[gain>=0?'You gained':'You lost',signMoney(gain),gain>=0?'up':'down'],
+    ['Biggest drop','−'+(sim.maxDrop*100).toFixed(0)+'%',sim.maxDrop>.005?'down':''],
+    ['Best year',sim.best===null?'–':pct(sim.best)+' (Yr '+sim.bestY+')',sim.best>0?'up':''],
+    ['Worst year',sim.worst===null?'–':pct(sim.worst)+' (Yr '+sim.worstY+')',sim.worst<0?'down':'']];
+  $('#oneStats').innerHTML=st.map(([k,v,c])=>`<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+  const need=1000*Math.pow(1.02,s.years);
+  $('#inflNote').innerHTML=`<b>Heads up:</b> prices rise over time (about 2% a year). In ${s.years} year${s.years>1?'s':''}, you’d need about <b class="num">${money(need)}</b> to buy what $1,000 buys today.`;
+  const ev=$('#events');
+  ev.innerHTML=sim.events.length?sim.events.map((e,i)=>{const c=Math.abs(e.impact)<0.5?'none':e.impact<0?'down':'up';
+    return`<li><span class="n ${c}">${i+1}</span><div><b>Year ${Math.ceil(e.m/12)}: ${e.ev.t}</b><p>${e.ev.d}</p></div><span class="imp ${c}">${c==='none'?'No effect on you':signMoney(e.impact)}</span></li>`}).join('')
+    :'<li style="grid-template-columns:1fr"><p>A quiet future. No big news this time.</p></li>';
+  const rows=ASSETS.map((a,i)=>({name:a.name,v:sim.hold[i],w:sim.w[i]})).filter(r=>r.w>0);
+  if(sim.wc>0.001)rows.push({name:'Under the mattress (cash)',v:sim.cash,w:sim.wc});
+  const mx=Math.max(...rows.map(r=>r.v),1);
+  $('#bars').innerHTML=rows.map(r=>{const inv=put*r.w,g=r.v-inv;return`<div class="bar-row"><div class="bar-top"><span>${r.name}</span><b class="num">${money(r.v)}</b></div><div class="bar-track"><div class="bar-fill" style="width:${(r.v/mx*100).toFixed(1)}%"></div></div><span class="bar-sub">Put in ${money(inv)} · <span class="imp ${g>=0?'up':'down'}" style="font-size:.8rem">${signMoney(g)}</span></span></div>`}).join('');
+}
+
+/* ---------- 100 futures ---------- */
+function runMany(){
+  const s=settings();if(s.start===0&&s.monthly===0)return;
+  const runs=[];for(let i=1;i<=100;i++)runs.push(simulate(alloc,s.start,s.monthly,s.years,1000+i));
+  const put=runs[0].contrib[runs[0].N];
+  const ends=runs.map(r=>r.vals[r.N]).sort((a,b)=>a-b);
+  const lost=ends.filter(v=>v<put-0.5).length,dbl=ends.filter(v=>v>=2*put).length;
+  lastMany={label:summary(),years:s.years,risk:(ASSETS.reduce((t,a)=>t+alloc[a.id]*a.risk,0)+(10-placed()))/10,typical:(ends[49]+ends[50])/2,worst:ends[0],best:ends[99],lost,put};
+  const body=$('#manyBody');
+  body.innerHTML=`<div class="many-grid"><div><div class="legend"><span><i class="sw" style="background:var(--up)"></i>A future that grew</span><span><i class="sw" style="background:var(--down)"></i>A future that lost money</span><span><i class="sw" style="background:var(--ink)"></i>Typical (middle) future</span><span><i class="sw" style="background:var(--blue)"></i>Money you put in</span></div>
+    <div class="chart-wrap"><svg class="chart" id="manyChart" role="img" aria-label="100 possible futures"></svg></div><p class="muted" id="clipNote" style="font-size:.84rem"></p></div>
+    <div><h3>Every square is one future</h3><div class="dots" style="margin-top:10px">${ends.map(v=>`<span class="${v<put-0.5?'lost':v>=2*put?'dbl':'grew'}"></span>`).join('')}</div>
+    <div class="dot-legend"><span><i style="background:var(--down)"></i>Lost money</span><span><i style="background:var(--up)"></i>Grew</span><span><i style="background:var(--up);box-shadow:inset 0 0 0 2px var(--accent)"></i>More than doubled</span></div>
+    <p class="big-say">You lost money in <b>${lost}</b> out of 100 futures.</p>
+    <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <div class="stat"><div class="k">Typical ending</div><div class="v">${money(lastMany.typical)}</div></div>
+      <div class="stat"><div class="k">You put in</div><div class="v">${money(put)}</div></div>
+      <div class="stat"><div class="k">Worst future</div><div class="v ${ends[0]<put?'down':''}">${money(ends[0])}</div></div>
+      <div class="stat"><div class="k">Best future</div><div class="v up">${money(ends[99])}</div></div>
+    </div><p class="muted" style="font-size:.88rem">More than doubled: <b class="num">${dbl}</b> of 100. ${lost===0?'Losing money never happened here.':lost<10?'Losing money was <b>unlikely</b>, but possible.':lost<40?'Losing money happened <b>sometimes</b>.':'Losing money was <b>likely</b>.'}</p></div></div>`;
+  drawMany(runs,put);lastRuns={runs,put};
+  $('#addCompare').hidden=false;
+}
+let lastRuns=null;
+function drawMany(runs,put){
+  const s=settings(),svg=$('#manyChart');if(!svg)return;
+  const allMax=runs.map(r=>Math.max(...r.vals)).sort((a,b)=>a-b);
+  const cap=Math.max(allMax[89],put)*1.08;
+  const f=frame(svg,cap,s.years);
+  const N=runs[0].N,stride=Math.max(1,Math.round(N/120));
+  runs.forEach(r=>el('path',{d:pathOf(r.vals,f,stride),class:r.vals[N]<put-0.5?'sp-down':'sp-up'},svg));
+  const med=[];for(let i=0;i<=N;i++){const c=runs.map(r=>r.vals[i]).sort((a,b)=>a-b);med.push((c[49]+c[50])/2)}
+  el('path',{d:pathOf(runs[0].contrib,f),class:'l-in'},svg);
+  el('path',{d:pathOf(med,f,stride),class:'l-med'},svg);
+  endLabel(svg,f,'Typical '+short(med[N]),med[N],'med',0);
+  const over=runs.filter(r=>Math.max(...r.vals)>f.top).length;
+  $('#clipNote').textContent=over?`${over} lucky future${over>1?'s go':' goes'} off the top of the chart.`:'';
+}
+
+/* ---------- compare ---------- */
+function saveCompare(){try{localStorage.setItem('rrlab-compare',JSON.stringify(compare))}catch(e){}}
+function renderCompare(){
+  $('#compareWrap').hidden=compare.length===0;
+  $('#compareBody').innerHTML=compare.map((c,i)=>`<tr><td>${c.label}</td><td class="n">${c.years}</td><td><span class="risk r${Math.round(c.risk)}">${[1,2,3,4,5].map(n=>`<i class="${n<=Math.round(c.risk)?'on':''}"></i>`).join('')}</span></td><td class="n">${money(c.typical)}<br><span class="muted">put in ${money(c.put)}</span></td><td class="n">${money(c.worst)}</td><td class="n">${money(c.best)}</td><td class="n" style="color:var(${c.lost?'--down':'--up'});font-weight:700">${c.lost} / 100</td><td><button type="button" data-rm="${i}" aria-label="Remove row">Remove</button></td></tr>`).join('');
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{compare.splice(+b.dataset.rm,1);saveCompare();renderCompare()});
+}
+
+/* ---------- wiring ---------- */
+function stale(){if(lastMany){$('#manyBody').innerHTML='<div class="empty-state">Your portfolio changed. Press <b>Play 100 futures</b> to test it.</div>';$('#addCompare').hidden=true;lastMany=null;lastRuns=null}}
+function changed(){renderBuilder();renderOne(false);stale()}
+['start','monthly','years'].forEach(id=>$('#'+id).addEventListener('input',changed));
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=PRESETS[+b.dataset.p];$('#start').value=p[0];$('#monthly').value=p[1];$('#years').value=p[2];changed()});
+$('#again').onclick=()=>{seed++;renderOne(true)};
+$('#replay').onclick=()=>{if(lastOne)drawOne(true)};
+$('#run100').onclick=runMany;
+$('#addCompare').onclick=()=>{if(!lastMany)return;compare.push(lastMany);if(compare.length>10)compare.shift();saveCompare();renderCompare();$('#addCompare').hidden=true};
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(lastOne)drawOne(false);if(lastRuns)drawMany(lastRuns.runs,lastRuns.put)},150)});
+
+buildList();renderBuilder();renderOne(true);renderCompare();
+})();
+</script>
+
+</body>
+</html>
